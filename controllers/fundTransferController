@@ -1,0 +1,35 @@
+const Payee = require('../models/Payee');
+const Transaction = require('../models/Transaction');
+const User = require('../models/User');
+
+exports.addPayee = async (req, res) => {
+  const { name, nickname, accountNumber } = req.body;
+  const userId = req.user.id;
+
+  const payee = await Payee.create({ userId, name, nickname, accountNumber });
+  res.status(201).json(payee);
+};
+
+exports.getPayees = async (req, res) => {
+  const userId = req.user.id;
+  const payees = await Payee.find({ userId });
+  res.json(payees);
+};
+
+exports.transferFunds = async (req, res) => {
+  const { accountNumber, amount, mode } = req.body;
+  const userId = req.user.id;
+
+  const sender = await User.findById(userId);
+  if (!sender) return res.status(404).json({ message: 'Sender not found' });
+
+  // Assume dummy balance check & update for now
+  const transaction = await Transaction.create({
+    senderId: userId,
+    recipientAccount: accountNumber,
+    amount,
+    mode
+  });
+
+  res.status(201).json({ message: `${mode} transfer successful`, transaction });
+};
