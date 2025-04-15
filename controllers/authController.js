@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Account = require('../models/accountDetails');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -52,6 +53,30 @@ exports.login = async (req, res) => {
     await user.save();
 
     res.json({ token: generateToken(user._id), name: user.name });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.addAccount = async (req, res) => {
+  const { name, fatherName, email, phone, address, dob, amount, aadhar, occupation, debitCard, accountType } = req.body;
+
+  try {
+    const userExists = await Account.findOne({ aadhar });
+    if (userExists) return res.status(400).json({ message: 'User already exists' });
+
+      // Generate dummy account number
+    const accountNumber = Math.floor(1000000000 + Math.random() * 900000000000).toString();
+
+    const user = await Account.create({
+      name, fatherName, email, phone, address, dob, amount, accountNumber, aadhar, occupation, debitCard, accountType
+    });
+
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      token: generateToken(user._id)
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

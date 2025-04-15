@@ -1,6 +1,7 @@
 const Payee = require('../models/Payee');
 const Transaction = require('../models/Transaction');
 const User = require('../models/User');
+const Account = require('../models/accountDetails');
 
 exports.addPayee = async (req, res) => {
   const { name, nickname, accountNumber } = req.body;
@@ -23,6 +24,22 @@ exports.transferFunds = async (req, res) => {
   const sender = await User.findById(userId);
   if (!sender) return res.status(404).json({ message: 'Sender not found' });
 
+  const senderAccount = await Account.findOne({ accountNumber: sender.accountNumber });
+  if (!senderAccount) return res.status(404).json({ message: 'Sender account not found' });
+
+  if (senderAccount.amount < amount) {
+    return res.status(400).json({ message: 'Insufficient balance' });
+  }
+
+  const recipientAccount = await Account.findOne({ accountNumber });
+  if (!recipientAccount) return res.status(404).json({ message: 'Recipient account not found' });
+
+  senderAccount.amount -= amount;
+  recipientAccount.amount += amount;
+
+  await senderAccount.save();
+  await recipientAccount.save();
+
   // Assume dummy balance check & update for now
   const transaction = await Transaction.create({
     senderId: userId,
@@ -30,6 +47,7 @@ exports.transferFunds = async (req, res) => {
     amount,
     mode
   });
+
 
   res.status(201).json({ message: `${mode} transfer successful`, transaction });
 };

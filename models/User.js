@@ -7,16 +7,11 @@ const userSchema = new mongoose.Schema({
   mobile: String,
   password: String,
   transactionPassword: String,
-  accountNumber: String,
+  accountNumber: {type: String, unique: true},
   isLocked: { type: Boolean, default: false },
   loginAttempts: { type: Number, default: 0 },
   otp: { type: String, default: null },
-  otpExpires: { type: Date, default: null },
-  status: {
-    type: String,
-    enum: ['PENDING', 'ACTIVE'],
-    default: 'PENDING'
-  },
+  otpExpires: { type: Date, default: null }
 });
 
 // Hash password before save

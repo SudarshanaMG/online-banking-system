@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const Admin = require('../models/Admin');
+const Account = require('../models/accountDetails');
 const jwt = require('jsonwebtoken');
 
 const generateToken = (id) => {
@@ -58,7 +59,7 @@ exports.login = async (req, res) => {
 
 exports.getPendingAccounts = async (req, res) => {
   try {
-    const pending = await User.find({ status: 'PENDING' });
+    const pending = await Account.find({ status: 'PENDING' });
     res.json(pending);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching pending accounts' });
@@ -67,7 +68,7 @@ exports.getPendingAccounts = async (req, res) => {
 
 exports.getAccountsById = async (req, res) => {
   try {
-    const pending = await User.findById(req.params.id);
+    const pending = await Account.findById(req.params.id);
     res.json(pending);
   } catch (err) {
     res.status(500).json({ message: 'No matching user with this id found' });
@@ -76,7 +77,7 @@ exports.getAccountsById = async (req, res) => {
 
 exports.approveAccount = async (req, res) => {
   try {
-    await User.findByIdAndUpdate(req.params.id, { status: 'ACTIVE' });
+    await Account.findByIdAndUpdate(req.params.id, { status: 'ACTIVE' });
     res.json({ message: 'Account approved successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Error approving account' });
@@ -84,10 +85,13 @@ exports.approveAccount = async (req, res) => {
 };
 
 exports.rejectAccount = async (req, res) => {
-  try {
-    await User.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Account rejected and deleted' });
-  } catch (err) {
-    res.status(500).json({ message: 'Error rejecting account' });
-  }
+  const { id } = req.params;
+
+  const request = await Account.findById(id);
+  if (!request) return res.status(404).json({ message: 'Request not found' });
+
+  request.status = 'REJECTED';
+  await request.save();
+
+  res.json({ message: 'Account request rejected' });
 };
